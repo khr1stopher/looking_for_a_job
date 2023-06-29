@@ -16,6 +16,7 @@ To accomplish the scraping task, the following are the most popular job platform
 - Dice
 - ZipRecruiter
 - SimplyHired
+- OCC Mundial
 
 ## Scraping Tools for Job Platform Data
 
