@@ -34,17 +34,16 @@ class LinkedinSpider(scrapy.Spider):
     #     pass
 
     def parse_next_posts(self, response, **kwargs):
-        jobs_post = response.xpath('//a[contains(@class, "base-card__full-link")]/@href').getall()
+        jobs_post = kwargs['jobs']
         
-        if len(jobs_post) + len(kwargs['jobs']) <= self.post_count:
-            link = f'https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords={self.keywords}&location={self.location}&position=1&pageNum=0&start={len(jobs_post)+len(kwargs["jobs"])+25}'
-            yield response.follow(link, callback=self.parse_next_posts, cb_kwargs={
-                'jobs': jobs_post + kwargs['jobs']
-            })
-        else:
-            yield {
-                'jobs': jobs_post + kwargs['jobs']
-            }
+        nex_jobs = response.xpath('//li/div[contains(@class, "base-card relative")]/a[contains(@class, "base-card__full-link")]/@href').getall()
+
+        total_jobs = jobs_post + nex_jobs
+
+        yield {
+            'jobs': total_jobs,
+            'length': len(total_jobs),
+        }
 
 
     def parse(self, response, **kwargs):
@@ -55,12 +54,13 @@ class LinkedinSpider(scrapy.Spider):
         self.post_count = int(jobs_count.replace(",", "").replace("+", ""))
 
         yield {
+            'url': self.start_urls,
             'counter': jobs_count,
-            'length': len(jobs_post),
         }
 
         if len(jobs_post) <= self.post_count:
             link = f'https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords={self.keywords}&location={self.location}&position=1&pageNum=0&start={len(jobs_post)+25}'
             yield response.follow(link, callback=self.parse_next_posts, cb_kwargs={
                 'jobs': jobs_post,
+                'link': link
             })
